@@ -1,3 +1,4 @@
+// main.ts
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -16,20 +17,27 @@ async function bootstrap() {
     }),
   );
 
-  // ✅ Baca dari ENV
-  const corsOrigins =
-    configService.get<string>('CORS_ORIGIN')?.split(',').map(o => o.trim()) || [];
+  const allowedOrigins = (configService.get<string>('CORS_ORIGIN') || '')
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
 
-  console.log('✅ Loaded CORS_ORIGIN:', corsOrigins);
+  console.log("✅ Allowed Origins:", allowedOrigins);
 
-  // ✅ Aktifkan CORS sesuai env
   app.enableCors({
-    origin: corsOrigins.length > 0 ? corsOrigins : '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.error("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"), false);
+      }
+    },
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   });
 
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle('Task Management API')
     .setDescription('A RESTful API for managing tasks')
@@ -41,10 +49,8 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   const port = configService.get<number>('PORT', 3000);
-  const host = configService.get<string>('HOST', '0.0.0.0');
-  await app.listen(port, host);
+  await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 Application is running on: http://${host}:${port}`);
+  console.log(`🚀 App running at http://localhost:${port}`);
 }
-
 bootstrap();
