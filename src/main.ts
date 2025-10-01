@@ -16,20 +16,23 @@ async function bootstrap() {
     }),
   );
 
+  // Ambil origin dari env
+  const corsOrigins = configService.get<string>('CORS_ORIGIN')?.split(',') || [];
+  console.log('✅ Allowed Origins:', corsOrigins);
 
-const corsOrigins = (configService.get<string>('CORS_ORIGIN') || '')
-  .split(',')
-  .map((o) => o.trim())
-  .filter(Boolean);
-
-console.log('✅ Allowed Origins:', corsOrigins);
-
-app.enableCors({
-  origin: corsOrigins, // <--- pakai list dari env
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  credentials: true,
-});
-
+  app.enableCors({
+    origin: (origin, callback) => {
+      // allow requests without origin (mobile apps, curl, etc)
+      if (!origin || corsOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.error(`❌ CORS blocked: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
   // Swagger setup
   const config = new DocumentBuilder()
@@ -46,8 +49,7 @@ app.enableCors({
   const host = configService.get<string>('HOST', '0.0.0.0');
   await app.listen(port, host);
 
-  console.log(`Application is running on: http://${host}:${port}`);
-  console.log(`Swagger docs: http://${host}:${port}/api`);
+  console.log(`🚀 API running on http://${host}:${port}`);
+  console.log(`📑 Swagger: http://${host}:${port}/api`);
 }
-
 bootstrap();
