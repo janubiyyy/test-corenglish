@@ -23,8 +23,8 @@ async function bootstrap() {
     .map((o) => o.trim())
     .filter(Boolean);
 
- // Enable CORS
-app.enableCors({
+  // Enable CORS
+ app.enableCors({
   origin: (origin, callback) => {
     const allowedOrigins = (configService.get<string>('CORS_ORIGIN') || '')
       .split(',')
