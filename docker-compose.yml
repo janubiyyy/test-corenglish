@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   # PostgreSQL Database Service
   postgres:
@@ -12,8 +14,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
       PGPORT: ${DB_PORT:-5432}
     ports:
-      - "${DB_PORT:-5432}:${DB_PORT:-5432}"
-    command: postgres -p ${DB_PORT:-5432}
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
@@ -33,18 +34,16 @@ services:
       HOST: 0.0.0.0
       DB_HOST: postgres
     ports:
-      - "${PORT:-3000}:${PORT:-3000}"
+      - "3000:3000"
     depends_on:
       - postgres
     networks:
       - task-management-network
-    volumes:
-      - ./dist:/usr/src/app/dist
     command: >
       sh -c "
-        echo 'Waiting for PostgreSQL to be ready...' &&
+        echo '⏳ Waiting for PostgreSQL to be ready...' &&
         sleep 10 &&
-        npm run migration:run &&
+        npm run typeorm migration:run -- -d dist/config/database.config.js &&
         npm run start:prod
       "
 
