@@ -23,12 +23,23 @@ async function bootstrap() {
     .map((o) => o.trim())
     .filter(Boolean);
 
-  // Enable CORS
-  app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
-  });
+ // Enable CORS
+app.enableCors({
+  origin: (origin, callback) => {
+    const allowedOrigins = (configService.get<string>('CORS_ORIGIN') || '')
+      .split(',')
+      .map((o) => o.trim());
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    }
+  },
+  credentials: true,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+});
+
 
   // Swagger API Documentation
   const config = new DocumentBuilder()
