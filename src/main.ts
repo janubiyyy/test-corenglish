@@ -16,14 +16,18 @@ async function bootstrap() {
     }),
   );
 
-  // Ambil CORS_ORIGIN dari env
-  const corsOrigins = configService.get<string>('CORS_ORIGIN')?.split(',') || [];
 
-  console.log('CORS_ORIGIN:', corsOrigins); // Debug log buat cek
+const corsOrigins = (configService.get<string>('CORS_ORIGIN') || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+console.log('✅ Allowed Origins:', corsOrigins);
 
 app.enableCors({
-  origin: '*',
+  origin: corsOrigins, // <--- pakai list dari env
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  credentials: true,
 });
 
 
