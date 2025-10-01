@@ -1,4 +1,3 @@
-// main.ts
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -9,6 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
+  // Validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -17,20 +17,21 @@ async function bootstrap() {
     }),
   );
 
+  // Ambil dari Railway env
   const allowedOrigins = (configService.get<string>('CORS_ORIGIN') || '')
     .split(',')
-    .map(o => o.trim())
+    .map((o) => o.trim())
     .filter(Boolean);
 
-  console.log("✅ Allowed Origins:", allowedOrigins);
+  console.log('✅ Allowed Origins:', allowedOrigins);
 
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.error("❌ Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"), false);
+        console.error('❌ Blocked by CORS:', origin);
+        callback(new Error('Not allowed by CORS'), false);
       }
     },
     credentials: true,
