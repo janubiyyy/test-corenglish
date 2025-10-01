@@ -21,21 +21,11 @@ async function bootstrap() {
 
   console.log('CORS_ORIGIN:', corsOrigins); // Debug log buat cek
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        // allow non-browser tools (Postman, curl)
-        return callback(null, true);
-      }
-      if (corsOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      console.error('Blocked by CORS:', origin);
-      return callback(new Error('Not allowed by CORS'), false);
-    },
-    credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  });
+app.enableCors({
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+});
+
 
   // Swagger setup
   const config = new DocumentBuilder()
