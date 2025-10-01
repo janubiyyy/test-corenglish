@@ -16,22 +16,26 @@ async function bootstrap() {
     }),
   );
 
-  // Ambil origin dari env
-  const corsOrigins = configService.get<string>('CORS_ORIGIN')?.split(',') || [];
-  console.log('✅ Allowed Origins:', corsOrigins);
+  // Ambil origin dari ENV
+  const corsOrigins = (configService.get<string>('CORS_ORIGIN') || '').split(',').map(o => o.trim());
 
   app.enableCors({
-    origin: (origin, callback) => {
-      // allow requests without origin (mobile apps, curl, etc)
-      if (!origin || corsOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.error(`❌ CORS blocked: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: corsOrigins.length ? corsOrigins : '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
+  });
+
+  // 👉 Tambah handler biar OPTIONS gak 502
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+      res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.sendStatus(204);
+    } else {
+      next();
+    }
   });
 
   // Swagger setup
@@ -49,7 +53,8 @@ async function bootstrap() {
   const host = configService.get<string>('HOST', '0.0.0.0');
   await app.listen(port, host);
 
-  console.log(`🚀 API running on http://${host}:${port}`);
-  console.log(`📑 Swagger: http://${host}:${port}/api`);
+  console.log(`Application is running on: http://${host}:${port}`);
+  console.log(`Swagger docs: http://${host}:${port}/api`);
 }
+
 bootstrap();
