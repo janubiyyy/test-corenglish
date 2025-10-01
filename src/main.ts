@@ -17,8 +17,18 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS for development
-  app.enableCors();
+  // Allowed origins from .env (pisahkan dengan koma)
+  const allowedOrigins = (configService.get<string>('CORS_ORIGIN') || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  // Enable CORS
+  app.enableCors({
+    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
   // Swagger API Documentation
   const config = new DocumentBuilder()
@@ -33,10 +43,10 @@ async function bootstrap() {
 
   // Get port and host from environment variables
   const port = configService.get<number>('PORT', 3000);
-  const host = configService.get<string>('HOST', 'localhost');
+  const host = configService.get<string>('HOST', '0.0.0.0'); // 0.0.0.0 biar bisa diakses publik
 
   await app.listen(port, host);
-  
+
   console.log(`Application is running on: http://${host}:${port}`);
   console.log(`Swagger documentation is available at: http://${host}:${port}/api`);
 }
